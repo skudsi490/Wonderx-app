@@ -6,7 +6,7 @@ import { NextPageContext } from "next";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useUserProfiles from "@/hooks/useUserProfiles";
 import AddProfileModal from "@/components/AddProfileModal";
-import { useProfile } from "../pages/ProfileContext";
+import { useProfile } from "../contexts/ProfileContext";
 
 const images = [
   "/images/default-blue.png",

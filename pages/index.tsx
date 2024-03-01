@@ -13,7 +13,7 @@ import useInfoModalStore from "@/hooks/useInfoModalStore";
 import CategoryCourses from "@/components/CategoryCourses";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useUserProfiles from "@/hooks/useUserProfiles";
-import { useUser } from "@/pages/UserContext";
+import { useUser } from "@/contexts/UserContext";
 import useKeepWatching from "@/hooks/useKeepWatching";
 
 const genres = [

@@ -1,7 +1,7 @@
 import React from "react";
 import useClipProgress from "../hooks/useClipProgress";
 import ClipCard from "./ClipCard";
-import { useUser } from "../pages/UserContext";
+import { useUser } from "../contexts/UserContext";
 
 type ClipWithDataProps = {
   clip: {

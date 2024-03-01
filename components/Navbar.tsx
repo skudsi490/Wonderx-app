@@ -15,7 +15,7 @@ import Select from "react-select";
 import AsyncSelect from "react-select/async";
 import { CSSObject } from "@emotion/serialize";
 
-import { useProfile } from "../pages/ProfileContext"; // <-- Import the useProfile hook
+import { useProfile } from "../contexts/ProfileContext"; // <-- Import the useProfile hook
 
 const TOP_OFFSET = 66;
 

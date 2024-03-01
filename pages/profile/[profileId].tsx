@@ -19,7 +19,7 @@ import InfoModal from "@/components/InfoModal";
 import CategoryCourses from "@/components/CategoryCourses";
 
 // Context
-import { useProfile as useContextProfile } from "../ProfileContext";
+import { useProfile as useContextProfile } from "../../contexts/ProfileContext";
 import { CourseInterface } from "@/types/index";
 
 const genres = [

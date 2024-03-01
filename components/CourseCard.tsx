@@ -11,8 +11,8 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import useUserProfiles from "@/hooks/useUserProfiles";
 import useUserFavorites from "@/hooks/useUserFavorites";
 import useProfileFavorites from "@/hooks/useProfileFavorites";
-import { useProfile } from "../pages/ProfileContext";
-import { useUser } from "../pages/UserContext";
+import { useProfile } from "../contexts/ProfileContext";
+import { useUser } from "../contexts/UserContext";
 import { CourseInProgress } from "@/hooks/useKeepWatching";
 
 interface CourseCardProps {

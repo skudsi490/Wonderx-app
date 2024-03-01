@@ -1,7 +1,7 @@
 import { SessionProvider } from "next-auth/react";
 import type { AppProps } from "next/app";
-import { ProfileProvider } from "./ProfileContext";
-import { UserProvider } from "./UserContext";
+import { ProfileProvider } from "../contexts/ProfileContext";
+import { UserProvider } from "../contexts/UserContext";
 import Head from "next/head";
 import "../styles/globals.css";
 import SWRConfigProvider from "../components/swr-config"; 
