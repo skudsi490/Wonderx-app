@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node E:\\NEW\\wonderx\\prisma\\seedRunner.ts"
+    "seed": "ts-node E:\\NEW\\wonderx\\prisma\\seedRunner.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@emotion/styled": "^11.11.0",
