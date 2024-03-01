@@ -1,0 +1,246 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  image              String?
+  email              String?           @unique
+  emailVerified      DateTime?
+  hashedPassword     String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  favoriteIds        String[]          @db.ObjectId
+  sessions           Session[]
+  accounts           Account[]
+  subscription       Subscription?
+  stripeCustomerId   String?
+  clipProgresses     clipProgress[]
+  courseProgresses   courseProgress[]
+  earnedBadges       UserBadge[]
+  earnedCertificates UserCertificate[]
+  reviews            Review[]
+  profiles           Profile[]
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAUSED
+}
+
+model Subscription {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String             @db.ObjectId
+  stripePriceId     String
+  status            SubscriptionStatus
+  currentPeriodEnd  DateTime
+  cancelAtPeriodEnd Boolean
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+}
+
+model Course {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  description      String
+  thumbnailUrl     String
+  genre            String
+  trailerVideoUrl  String
+  duration         Int
+  modules          Module[] // Establish relation from Course to Module
+  courseProgresses courseProgress[]
+  reviews          Review[]
+  ageRating        String? // e.g., "All Ages", "7+", "13+", "18+"
+}
+
+model Module {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  clips    Clip[] // Establish relation from Module to Clip
+}
+
+model Clip {
+  id       String         @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  videoUrl String
+  duration Int
+  moduleId String         @db.ObjectId
+  module   Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress clipProgress[]
+}
+
+model clipProgress {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId String?  @db.ObjectId
+  profile   Profile? @relation(fields: [profileId], references: [id])
+  clipId    String   @db.ObjectId
+  clip      Clip     @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  progress  Float // Value between 0 and 1 representing percentage complete
+  finished  Boolean // Whether the user or profile has finished watching the clip
+
+  @@unique([userId, clipId])
+  @@unique([profileId, clipId])
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    Int // We'll validate this value in the API or frontend
+  review    String
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseId]) // Each user should be able to review a course only once
+}
+
+model Profile {
+  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String               @db.ObjectId
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  image              String // Default random images URL
+  color              String? // Default color
+  kidMode            Boolean // Whether the profile is for kids
+  favoriteIds        String[]             @db.ObjectId
+  clipProgresses     clipProgress[]
+  courseProgresses   courseProgress[]
+  earnedBadges       ProfileBadge[]
+  earnedCertificates ProfileCertificate[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+// ... [Previous definitions remain unchanged]
+
+model courseProgress {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String?   @db.ObjectId
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId         String?   @db.ObjectId
+  profile           Profile?  @relation(fields: [profileId], references: [id])
+  courseId          String    @db.ObjectId
+  course            Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress          Float // Value between 0 and 1 representing percentage complete
+  finished          Boolean // Whether the user or profile has finished the course
+  lastWatchedClipId String?   @db.ObjectId // ID of the last watched clip in the course
+  lastWatchedAt     DateTime? // Timestamp of when the last clip was watched
+
+  @@unique([userId, courseId])
+  @@unique([profileId, courseId])
+}
+
+model Badge {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  image       String
+  description String?
+  users       UserBadge[]
+  profiles    ProfileBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String   @db.ObjectId
+  user     User     @relation(fields: [userId], references: [id])
+  badgeId  String   @db.ObjectId
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model ProfileBadge {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  profileId String   @db.ObjectId
+  profile   Profile  @relation(fields: [profileId], references: [id])
+  badgeId   String   @db.ObjectId
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt  DateTime @default(now())
+
+  @@unique([profileId, badgeId])
+}
+
+// Certificates can be similar to badges but more formal.
+model Certificate {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  users       UserCertificate[]
+  profiles    ProfileCertificate[]
+}
+
+model UserCertificate {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String      @db.ObjectId
+  user          User        @relation(fields: [userId], references: [id])
+  certificateId String      @db.ObjectId
+  certificate   Certificate @relation(fields: [certificateId], references: [id])
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, certificateId])
+}
+
+model ProfileCertificate {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  profileId     String      @db.ObjectId
+  profile       Profile     @relation(fields: [profileId], references: [id])
+  certificateId String      @db.ObjectId
+  certificate   Certificate @relation(fields: [certificateId], references: [id])
+  earnedAt      DateTime    @default(now())
+
+  @@unique([profileId, certificateId])
+}
