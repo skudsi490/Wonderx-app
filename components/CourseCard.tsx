@@ -160,3 +160,4 @@ const CourseCard: React.FC<CourseCardProps> = ({
 };
 
 export default React.memo(CourseCard);
+
