@@ -113,8 +113,8 @@ model Clip {
   title    String
   videoUrl String
   duration Int
-  moduleId String         @db.ObjectId
-  module   Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId String?        @db.ObjectId // Allow null values
+  module   Module?        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress clipProgress[]
 }
 

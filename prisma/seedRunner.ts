@@ -1,7 +1,8 @@
+// prisma/seedRunner.ts
 async function runSeeding() {
     // Import and run the function from seed.mjs
-    const seedFromMjs = await import('./seed.mjs');
-    seedFromMjs.default(); // Assuming you're exporting a default function in seed.mjs
+    const { default: seedFromMjs } = await import('./seed.mjs');
+    seedFromMjs(); // Call the default-exported seed function
 }
 
 runSeeding().catch((e) => {

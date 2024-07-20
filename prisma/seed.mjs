@@ -1,10 +1,11 @@
+// prisma/seed.mjs
 import { PrismaClient } from '@prisma/client';
 
 async function seed() {
     const prisma = new PrismaClient();
 
     try {
-        // Fetch all clips without checking for moduleId
+        // Fetch all clips
         const allClips = await prisma.clip.findMany();
 
         for (let clip of allClips) {
@@ -18,6 +19,8 @@ async function seed() {
                     where: { id: clip.id },
                     data: { duration: durationInSeconds.toString() } // Storing as string as per the model
                 });
+            } else {
+                console.warn(`Skipping clip with ID ${clip.id} due to null moduleId`);
             }
         }
 
@@ -29,4 +32,4 @@ async function seed() {
     }
 }
 
-seed();
+export default seed;

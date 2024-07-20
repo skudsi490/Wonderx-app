@@ -1,11 +1,10 @@
-
-// E:\wonderx\hooks\useUser.ts
+// hooks/useUser.ts
 import { useRecoilState } from 'recoil';
-import { userState } from '../states/userState';
-import { UserInterface } from "../types/index"; // Importing UserInterface
+import { currentUserAtom } from './atoms';
+import { UserInterface } from '../types/index';
 
 export const useUser = () => {
-  const [user, setUser] = useRecoilState(userState);
+  const [user, setUser] = useRecoilState(currentUserAtom);
 
   const setActiveUser = (user: UserInterface) => {
     setUser(user);
