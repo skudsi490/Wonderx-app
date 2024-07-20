@@ -7,8 +7,8 @@ type ClipWithProgress = {
   id: string;
   title: string;
   videoUrl: string;
-  duration: number; // Change this line from string to number
-  moduleId: string;
+  duration: number;
+  moduleId: string | null; // Allow moduleId to be null
   progress?: number;
   finished?: boolean;
 };
@@ -70,7 +70,15 @@ export default async function handler(
       select: {
         id: true,
         title: true,
-        clips: true,
+        clips: {
+          select: {
+            id: true,
+            title: true,
+            videoUrl: true,
+            duration: true,
+            moduleId: true,
+          },
+        },
       },
     });
 
@@ -78,22 +86,31 @@ export default async function handler(
       return res.status(404).json({ error: "Module not found" });
     }
 
-    for (let i = 0; i < courseModule.clips.length; i++) {
+    const transformedModule: CourseModule = {
+      id: courseModule.id,
+      title: courseModule.title,
+      clips: courseModule.clips.map(clip => ({
+        ...clip,
+        moduleId: clip.moduleId ?? '', // Ensure moduleId is a string
+      })),
+    };
+
+    for (let i = 0; i < transformedModule.clips.length; i++) {
       const clipProgress = await prismadb.clipProgress.findUnique({
         where: {
-          userId_clipId: { userId, clipId: courseModule.clips[i].id },
+          userId_clipId: { userId, clipId: transformedModule.clips[i].id },
         },
       });
 
       if (clipProgress) {
-        courseModule.clips[i].progress = clipProgress.progress;
-        courseModule.clips[i].finished = clipProgress.finished;
+        transformedModule.clips[i].progress = clipProgress.progress;
+        transformedModule.clips[i].finished = clipProgress.finished;
       }
     }
 
-    console.log("Fetched module:", courseModule);
+    console.log("Fetched module:", transformedModule);
 
-    return res.status(200).json(courseModule);
+    return res.status(200).json(transformedModule);
   } catch (error) {
     console.log(error);
     return res.status(500).end();
