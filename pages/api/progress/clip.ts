@@ -19,41 +19,38 @@ const clipProgressHandler = async (
   req: NextApiRequest,
   res: NextApiResponse
 ) => {
-  const token = await getToken({ req, secret });
-  const userId = token?.userId as string;
+  try {
+    const token = await getToken({ req, secret });
+    const userId = token?.userId as string;
 
-  if (!userId) {
-    return res.status(401).json({ error: "User not authenticated." });
-  }
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated." });
+    }
 
-  const { clipId } = req.query;
-  const profileId = req.body.profileId || req.query.profileId;
+    const { clipId } = req.query;
+    const profileId = req.body.profileId || req.query.profileId;
 
-  const { progress, finished } = req.body;
+    const { progress, finished } = req.body;
 
-  if (typeof clipId !== "string" || !clipId) {
-    return res.status(400).json({ error: "clipId is required." });
-  }
+    if (typeof clipId !== "string" || !clipId) {
+      return res.status(400).json({ error: "clipId is required." });
+    }
 
-  const uniqueKey: ClipProgressWhereUniqueInput = profileId
-    ? { profileId_clipId: { profileId, clipId } }
-    : { userId_clipId: { userId, clipId } };
+    const uniqueKey: ClipProgressWhereUniqueInput = profileId
+      ? { profileId_clipId: { profileId: profileId as string, clipId } }
+      : { userId_clipId: { userId, clipId } };
 
-  if (req.method === "GET") {
-    const clipProgress = await prismadb.clipProgress.findUnique({
-      where: uniqueKey as any,
-    });
-    return clipProgress
-      ? res.json(clipProgress)
-      : res
-          .status(404)
-          .json({
-            error: "No progress data found for this clip and profile/user.",
-          });
-  }
+    if (req.method === "GET") {
+      const clipProgress = await prismadb.clipProgress.findUnique({
+        where: uniqueKey as any,
+      });
 
-  if (req.method === "POST") {
-    try {
+      return clipProgress
+        ? res.json(clipProgress)
+        : res.status(404).json({ error: "No progress data found for this clip and profile/user." });
+    }
+
+    if (req.method === "POST") {
       let clipProgressData;
       const existingRecord = await prismadb.clipProgress.findUnique({
         where: uniqueKey as any,
@@ -82,62 +79,64 @@ const clipProgressHandler = async (
         include: { module: true },
       });
 
-      const courseId = clip?.module.courseId;
+      if (clip?.module) {
+        const courseId = clip.module.courseId;
 
-      if (courseId) {
-        const allCourseClips = await prismadb.clip.findMany({
-          where: { module: { courseId } },
-        });
-
-        let totalProgress = 0;
-
-        for (const courseClip of allCourseClips) {
-          const progressData = await prismadb.clipProgress.findUnique({
-            where: profileId
-              ? { profileId_clipId: { profileId, clipId: courseClip.id } }
-              : { userId_clipId: { userId, clipId: courseClip.id } },
+        if (courseId) {
+          const allCourseClips = await prismadb.clip.findMany({
+            where: { module: { courseId } },
           });
 
-          totalProgress += progressData?.progress || 0;
-        }
+          let totalProgress = 0;
 
-        const averageCourseProgress = totalProgress / allCourseClips.length;
+          for (const courseClip of allCourseClips) {
+            const progressData = await prismadb.clipProgress.findUnique({
+              where: profileId
+                ? { profileId_clipId: { profileId: profileId as string, clipId: courseClip.id } }
+                : { userId_clipId: { userId, clipId: courseClip.id } },
+            });
 
-        // Update or create courseProgress record
-        const uniqueCourseKey = profileId
-          ? { profileId_courseId: { profileId, courseId } }
-          : { userId_courseId: { userId, courseId } };
+            totalProgress += progressData?.progress || 0;
+          }
 
-        const existingCourseProgress = await prismadb.courseProgress.findUnique(
-          { where: uniqueCourseKey as any }
-        );
+          const averageCourseProgress = totalProgress / allCourseClips.length;
 
-        if (existingCourseProgress) {
-          await prismadb.courseProgress.update({
+          // Update or create courseProgress record
+          const uniqueCourseKey = profileId
+            ? { profileId_courseId: { profileId: profileId as string, courseId } }
+            : { userId_courseId: { userId, courseId } };
+
+          const existingCourseProgress = await prismadb.courseProgress.findUnique({
             where: uniqueCourseKey as any,
-            data: { progress: averageCourseProgress },
           });
-        } else {
-          await prismadb.courseProgress.create({
-            data: {
-              userId: profileId ? undefined : userId,
-              profileId: profileId || undefined,
-              courseId,
-              progress: averageCourseProgress,
-              finished: averageCourseProgress === 1, // Mark as finished if 100% complete
-            },
-          });
+
+          if (existingCourseProgress) {
+            await prismadb.courseProgress.update({
+              where: uniqueCourseKey as any,
+              data: { progress: averageCourseProgress, finished: averageCourseProgress === 1 },
+            });
+          } else {
+            await prismadb.courseProgress.create({
+              data: {
+                userId: profileId ? undefined : userId,
+                profileId: profileId || undefined,
+                courseId,
+                progress: averageCourseProgress,
+                finished: averageCourseProgress === 1, // Mark as finished if 100% complete
+              },
+            });
+          }
         }
       }
 
       return res.json(clipProgressData);
-    } catch (error: any) {
-      console.error("Error processing POST request:", error.message);
-      return res.status(500).json({ error: error.message });
     }
-  }
 
-  return res.status(405).json({ error: "Method not allowed." });
+    return res.status(405).json({ error: "Method not allowed." });
+  } catch (error: any) {
+    console.error("Error processing request:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
 };
 
 export default clipProgressHandler;
