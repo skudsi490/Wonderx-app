@@ -1,12 +1,13 @@
-    // hooks/atoms.ts
-    import { atom } from 'recoil';
+// hooks/atoms.ts
+import { atom } from 'recoil';
+import { UserInterface } from '../types/index';
 
-    export const currentUserAtom = atom({
-    key: 'currentUser', // unique ID (with respect to other atoms/selectors)
-    default: null, // default value (aka initial value)
-    });
+export const currentUserAtom = atom<UserInterface | null>({
+  key: 'currentUser',
+  default: null,
+});
 
-    export const userProfilesAtom = atom({
-    key: 'userProfiles',
-    default: [],
-    });
+export const userProfilesAtom = atom<UserInterface[]>({
+  key: 'userProfiles',
+  default: [],
+});

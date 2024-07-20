@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 
 async function updateSchema() {
-  const uri = "mongodb+srv://skudsi490:XW15ofwvvOSVUuc9@cluster0.r7augpr.mongodb.net/WONDERX";  // replace with your connection string
+  const uri = "mongodb+srv://skudsi490:lHpMdYGJoyPuG82e@cluster0.r7augpr.mongodb.net/WONDERX";  // replace with your connection string
   const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
   try {
